@@ -163,7 +163,7 @@ end
 
 function status()
 	local e = {}
-	e["global_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep -i 'global' >/dev/null", appname)) == 0
+	e["global_status"] = luci.sys.call(string.format("top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep -i 'global\\.json' >/dev/null", appname)) == 0
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
@@ -211,6 +211,9 @@ function ping_node()
 	e.index = index
 	local nodes_ping = ucic:get(appname, "@global_other[0]", "nodes_ping") or ""
 	if nodes_ping:find("tcping") and luci.sys.exec("echo -n $(command -v tcping)") ~= "" then
+		if api.is_ipv6(address) then
+			address = api.get_ipv6_only(address)
+		end
 		e.ping = luci.sys.exec(string.format("echo -n $(tcping -q -c 1 -i 1 -t 2 -p %s %s 2>&1 | grep -o 'time=[0-9]*' | awk -F '=' '{print $2}') 2>/dev/null", port, address))
 	end
 	if e.ping == nil or tonumber(e.ping) == 0 then
